@@ -1,6 +1,8 @@
 # compiler
 it compiles. because reasons.
 
+Put CHECKED OUT - [INITIALS] at the bottom of the read me when you are working on the file so we don't commit over eachother.
+
 To Do:
 1) Fix stage 0
 2) Create a copy of stage0 for stage1
