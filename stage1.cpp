@@ -1,6 +1,6 @@
 // Cade Schwartz and Seth Parry
 // CS 4301
-// Compiler Stage 1
+// Compiler Stage 0
 
 #include <iostream>
 #include <fstream>
@@ -10,11 +10,12 @@
 #include <sstream>
 #include <vector>
 #include <cctype>
+#include <list>
 
 using namespace std;
 
 const int MAX_SYMBOL_TABLE_SIZE = 256;
-enum storeType {INTEGER, BOOLEAN, PROG_NAME};
+enum storeType {INTEGER, BOOLEAN, PROG_NAME, TEMPORARY};
 enum allocation {YES,NO};
 enum modes {VARIABLE, CONSTANT};
 struct entry //define symbol table entry format
@@ -38,6 +39,9 @@ int lineNum = 1;
 int numBooleans = 0;
 int numIntegers = 0;
 int numEntries = 0;
+int numTemps = 0;
+list<string> operatorStk;
+list<string> operandStk;
 
 void CreateListingHeader();
 void Parser();
@@ -470,7 +474,6 @@ void Terms()
 	string tempToken = token;
 	if(token == "-" || token == "+" || token == "or"){
 		PushOperator(AddLevelOp());
-		PushOperator(x)
 		storeType temp = Factor();
 		if(tempToken == "+" && temp != INTEGER) exit("operator + requires integer operands");
 		if(tempToken == "-" && temp != INTEGER) exit("operator - requires integer operands");
@@ -907,6 +910,10 @@ string GenInternalName(storeType x){
 		output = "B" + to_string(numBooleans);
 		numBooleans++;
 	}
+	else if(x == TEMPORARY) {
+		output = "T" + to_string(numTemps);
+		numTemps++;
+	}
 	return output;
 }
 
@@ -944,6 +951,7 @@ void Code(string op, string operand1, string operand2)
 
 void PushOperator(string name) //push name onto operatorStk
 {
+	operatorStk.push_back(name);
  //push name onto stack;
 }
 
@@ -953,19 +961,47 @@ void PushOperand(string name) //push name onto operandStk
  //if name is a literal and has no symbol table entry
  //insert symbol table entry, call whichType to determine the data type of the literal
  //push name onto stack;
+ 	operandStk.push_back(name);
+	if (WhichType(name) == BOOLEAN) {//name is a boolean literal then data type = BOOLEAN
+		if(name == "true" || name == "not false"){
+			if(getEntryNumber("TRUE") == -1)
+				Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+		}
+		else if(name == "false" || name == "not true"){
+			if(getEntryNumber("FALS") == -1)
+				Insert("FALS", BOOLEAN, CONSTANT, "0", YES, 1);
+		}
+	}
+	else if (WhichType(name) == INTEGER) { //data type = INTEGER
+		if(getEntryNumber(name) == -1)
+			Insert(name, INTEGER, CONSTANT, WhichValue(name), YES, 1);
+	}
 }
 
 string PopOperator() //pop name from operatorStk
 {
- //if operatorStk is not empty
- //return top element removed from stack;
- //else process error: operator stack underflow;
- return "";
+	//if operatorStk is not empty
+	//return top element removed from stack;
+	//else process error: operator stack underflow;
+	string temp;
+	if(!operatorStk.empty()){
+		temp = operatorStk.back();
+		operatorStk.pop_back();
+	}
+	else exit("operator stack underflow");
+	return temp;
 }
 
 string PopOperand() //pop name from operandStk
 {
- //if operandStk is not empty
- //return top element removed from stack;
- //else process error: operand stack underflow;
+	//if operandStk is not empty
+	//return top element removed from stack;
+	//else process error: operand stack underflow;
+ 	string temp;
+	if(!operandStk.empty()){
+		temp = operandStk.back();
+		operandStk.pop_back();
+	}
+	else exit("operand stack underflow");
+	return temp;
 }
